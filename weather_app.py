@@ -1,6 +1,6 @@
 import requests
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 def get_weather(city):
     """Fetch weather data for a given city"""
@@ -46,16 +46,25 @@ def display_weather(data):
     wind_speed = data['wind']['speed']
     sunrise_unix_timestamp = data['sys']['sunrise']
     sunset_unix_timestamp = data['sys']['sunset']
+    timezone_offset = data['timezone']
 
     # convert unix timezone neutral timestamp to cooresponding datetime object
+    # note datetime.fromtimestamp converts timestamp to computers local timezone. use utcfromtimestamp
     
-    sunrise_datetime_object = datetime.fromtimestamp(sunrise_unix_timestamp)
-    sunset_datetime_object = datetime.fromtimestamp(sunset_unix_timestamp)
+    sunrise_datetime_object = datetime.utcfromtimestamp(sunrise_unix_timestamp)
+    sunset_datetime_object = datetime.utcfromtimestamp(sunset_unix_timestamp)
+
+    # timezone (tz) offset must be done to datetime object before string conversion
+    # convert tz to timedelta.
+
+    offset_object = timedelta(seconds=timezone_offset)
+    tz_surise = sunrise_datetime_object + offset_object
+    tz_surset = sunset_datetime_object + offset_object
 
     # convert date objects to time string
 
-    sunrise_time = sunrise_datetime_object.strftime("%H:%M:%S")
-    sunset_time = sunset_datetime_object.strftime("%H:%M:%S")
+    sunrise_time = tz_surise.strftime("%H:%M:%S")
+    sunset_time = tz_surset.strftime("%H:%M:%S")
 
     #strptime(sunrise_unix_timestamp, "%H:%M:%S")
 
@@ -69,6 +78,7 @@ def display_weather(data):
     print(f"Wind Speed: {wind_speed} m/s")    
     print(f"Sunrise Time: {sunrise_time}")
     print(f"Sunset Time: {sunset_time}")
+
 
 def main():
     """Main program loop"""
