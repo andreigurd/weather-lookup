@@ -1,5 +1,6 @@
 import requests
 import os
+from datetime import datetime
 
 def get_weather(city):
     """Fetch weather data for a given city"""
@@ -43,6 +44,20 @@ def display_weather(data):
     description = data['weather'][0]['description']
     humidity = data['main']['humidity']
     wind_speed = data['wind']['speed']
+    sunrise_unix_timestamp = data['sys']['sunrise']
+    sunset_unix_timestamp = data['sys']['sunset']
+
+    # convert unix timezone neutral timestamp to cooresponding datetime object
+    
+    sunrise_datetime_object = datetime.fromtimestamp(sunrise_unix_timestamp)
+    sunset_datetime_object = datetime.fromtimestamp(sunset_unix_timestamp)
+
+    # convert date objects to time string
+
+    sunrise_time = sunrise_datetime_object.strftime("%H:%M:%S")
+    sunset_time = sunset_datetime_object.strftime("%H:%M:%S")
+
+    #strptime(sunrise_unix_timestamp, "%H:%M:%S")
 
     # Display it nicely
     print(f"\n{'='*50}")
@@ -51,8 +66,9 @@ def display_weather(data):
     print(f"Temperature: {temp} C (feels like {feels_like} C)")
     print(f"Conditions: {description.capitalize()}")
     print(f"Humidity: {humidity}%")
-    print(f"Wind Speed: {wind_speed} m/s")
-    print(f"{'='*50}\n")
+    print(f"Wind Speed: {wind_speed} m/s")    
+    print(f"Sunrise Time: {sunrise_time}")
+    print(f"Sunset Time: {sunset_time}")
 
 def main():
     """Main program loop"""
@@ -70,3 +86,10 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# Add these features to your weather app:
+# - Show sunrise and sunset times (they're in the data as Unix timestamps - look up how to convert them)
+# - Add a 5-day forecast feature (use the forecast endpoint: `/data/2.5/forecast`)
+# - Let users choose between Celsius and Fahrenheit
+# - Save favorite cities and quickly look them up
+
