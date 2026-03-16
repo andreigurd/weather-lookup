@@ -1,8 +1,9 @@
 import requests
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 import json
 from tabulate import tabulate
+import random
 
 # set global default units
 units = 'metric'
@@ -27,6 +28,23 @@ except ValueError:
 except PermissionError:
     print("Need permission to access favorites file. Blank favorites list created.")
     favorites = []
+#--------------------------------------------------------------------------------------
+# When the app starts. Bible Verse of the Day Feature
+#--------------------------------------------------------------------------------------
+
+def verse_of_the_day():
+    """Get a Proverb for today's date"""
+    day = date.today().day  # 1-31
+    
+    reference = f"Proverbs {day}"
+    response = requests.get(f"https://bible-api.com/{reference}")
+    if response.status_code == 200:
+        data = response.json()
+        # the endpoint is already proverbs and the chapter == day so dont need to try to call [chapter]
+        random_verse = random.choice(data['verses'])
+        # this gives the whole verse dictionary
+        print(f"\nVerse of the Day - {random_verse['book_name']} {random_verse['chapter']}:{random_verse['verse']}")
+        print(f'"{random_verse['text'].strip()}"\n')
 
 #--------------------------------------------------------------------------------------
 def get_weather(city):
@@ -208,7 +226,10 @@ def write_json():
         json.dump(favorites, file, indent=4)
 
 #--------------------------------------------------------------------------------------
-def main():
+def main():    
+    """Bible Verse of the Day Feature"""
+    verse_of_the_day()
+
     """Main program loop"""
     print("Weather Lookup App")
     global units, temp_units, speed_units
