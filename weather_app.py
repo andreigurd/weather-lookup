@@ -78,17 +78,6 @@ def get_forecast(city):
     # Make the request
     response = requests.get(base_url, params=params)
     
-    # print json data keys    
-    # data = response.json()
-    # print(data.keys())
-    # #print(json.dumps(data, indent=2)) # may not be helpfull to print everything
-
-    # # can print limited entries in keys to see data structure
-    # #[:xx] limits to number of entries in data list.
-    # print(json.dumps(data['city'], indent=2))
-    # print(json.dumps(data['cnt'], indent=2))
-    # print(json.dumps(data['list'][:0], indent=2))       
-
     # Check if successful
     if response.status_code == 200:
         return response.json()
@@ -137,9 +126,7 @@ def display_weather(data):
 
     sunrise_time = tz_sunrise.strftime("%H:%M:%S")
     sunset_time = tz_sunset.strftime("%H:%M:%S")
-
-    #strptime(sunrise_unix_timestamp, "%H:%M:%S")
-
+    
     # Display it nicely
     print(f"\n{'='*50}")
     print(f"Weather in {city}, {country}")
@@ -158,7 +145,7 @@ def display_forecast(data):
         return
 
     # Extract the data we want
-    #city and country listed only once.
+    
     city = data['city']['name']
     country = data['city']['country']
 
@@ -168,7 +155,7 @@ def display_forecast(data):
     print(f"{'='*50}")    
 
     for entry in data['list']:
-        #print(entry.keys())
+        
         date_stmp = entry['dt']        
         datetime_object = datetime.fromtimestamp(date_stmp, tz=timezone.utc)        
         date_string = datetime_object.strftime("%Y-%m-%d %H:%M")      
@@ -291,9 +278,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# Add these features to your weather app:
-# - Show sunrise and sunset times (they're in the data as Unix timestamps - look up how to convert them)
-# - Add a 5-day forecast feature (use the forecast endpoint: `/data/2.5/forecast`)
-# - Let users choose between Celsius and Fahrenheit
-# - Save favorite cities and quickly look them up
 
