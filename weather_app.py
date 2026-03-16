@@ -1,7 +1,11 @@
 import requests
 import os
 from datetime import datetime, timedelta, timezone
-import json
+
+# set global default units
+units = 'metric'
+temp_units = 'C'
+speed_units = 'm/s'
 
 def get_weather(city):
     """Fetch weather data for a given city"""
@@ -16,7 +20,7 @@ def get_weather(city):
     params = {
         'q': city,
         'appid': api_key,
-        'units': 'metric'  # Use Celsius
+        'units': units  
     }
 
     # Make the request
@@ -46,7 +50,7 @@ def get_forecast(city):
     params = {
         'q': city,
         'appid': api_key,
-        'units': 'metric'  # Use Celsius
+        'units': units
     }
     
     # Make the request
@@ -104,13 +108,13 @@ def display_weather(data):
     # convert tz to timedelta.
 
     offset_object = timedelta(seconds=timezone_offset)
-    tz_surise = sunrise_datetime_object + offset_object
-    tz_surset = sunset_datetime_object + offset_object
+    tz_sunrise = sunrise_datetime_object + offset_object
+    tz_sunset = sunset_datetime_object + offset_object
 
     # convert date objects to time string
 
-    sunrise_time = tz_surise.strftime("%H:%M:%S")
-    sunset_time = tz_surset.strftime("%H:%M:%S")
+    sunrise_time = tz_sunrise.strftime("%H:%M:%S")
+    sunset_time = tz_sunset.strftime("%H:%M:%S")
 
     #strptime(sunrise_unix_timestamp, "%H:%M:%S")
 
@@ -118,10 +122,10 @@ def display_weather(data):
     print(f"\n{'='*50}")
     print(f"Weather in {city}, {country}")
     print(f"{'='*50}")
-    print(f"Temperature: {temp} C (feels like {feels_like} C)")
+    print(f"Temperature: {temp} {temp_units} (feels like {feels_like} {temp_units})")
     print(f"Conditions: {description.capitalize()}")
     print(f"Humidity: {humidity}%")
-    print(f"Wind Speed: {wind_speed} m/s")    
+    print(f"Wind Speed: {wind_speed} {speed_units}")    
     print(f"Sunrise Time: {sunrise_time}")
     print(f"Sunset Time: {sunset_time}")
 
@@ -151,34 +155,58 @@ def display_forecast(data):
         wind_speed = entry['wind']['speed']
 
         print(f"\nDate: {date_string}")
-        print(f"Temperature: {temp} C")
+        print(f"Temperature: {temp} {temp_units}")
         print(f"Humidity: {humidity}%")
-        print(f"Wind Speed: {wind_speed}m/s")      
+        print(f"Wind Speed: {wind_speed} {speed_units}")      
     
     
 #--------------------------------------------------------
 def main():
     """Main program loop"""
     print("Weather Lookup App")
-
+    global units, temp_units, speed_units
+    
     while True:
-        city = input("\nEnter a city name (or 'quit' to exit): ")
+        city = input("\nEnter a city name (or 'quit' to exit): ")        
 
         if city.lower() == 'quit':
             print("Thanks for using Weather App!")
+            continue
+        else:
             break
+
+    while True: 
+        option = input("\nEnter Metric or Imperial units to display: ").lower()
+        if option == "metric":
+            units = option
+            temp_units = 'C'
+            speed_units = 'm/s'
+            break            
+        elif option == "imperial":
+            units = option
+            temp_units = 'F'
+            speed_units = 'mph'
+            break            
+        else:
+            print("Invalid option. Please select from the two options.")
+            continue
+        
     while True:
         option = input("\nEnter Weather or Forecast lookup: ").lower()
         if option == "weather":
             weather_data = get_weather(city)
             display_weather(weather_data) # this sends weather_data into the function display_weather
+            break
         elif option == "forecast":
             forecast_data = get_forecast(city)
             display_forecast(forecast_data)
+            break
         else:
             print("Invalid option. Please select from the two options.")
             continue
-        
+
+    return (units, temp_units, speed_units)
+
 
 if __name__ == "__main__":
     main()
