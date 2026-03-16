@@ -1,6 +1,7 @@
 import requests
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import json
 
 def get_weather(city):
     """Fetch weather data for a given city"""
@@ -31,7 +32,51 @@ def get_weather(city):
         print(f"Error: {response.status_code}")
         return None
 
+#--------------------------------------------------------    
+def get_forecast(city):
+    """Fetch forecast data for a given city"""
+    api_key = os.getenv('OPENWEATHER_API_KEY')
+    
+    if not api_key:
+        print("Error: OPENWEATHER_API_KEY not set")
+        return None
+    
+    # Build the URL with query parameters
+    base_url = "https://api.openweathermap.org/data/2.5/forecast"
+    params = {
+        'q': city,
+        'appid': api_key,
+        'units': 'metric'  # Use Celsius
+    }
+    
+    # Make the request
+    response = requests.get(base_url, params=params)
+    
+    # print json data keys    
+    # data = response.json()
+    # print(data.keys())
+    # #print(json.dumps(data, indent=2)) # may not be helpfull to print everything
+
+    # # can print limited entries in keys to see data structure
+    # #[:xx] limits to number of entries in data list.
+    # print(json.dumps(data['city'], indent=2))
+    # print(json.dumps(data['cnt'], indent=2))
+    # print(json.dumps(data['list'][:0], indent=2))       
+
+    # Check if successful
+    if response.status_code == 200:
+        return response.json()
+    elif response.status_code == 404:
+        print(f"City '{city}' not found")
+        return None
+    else:
+        print(f"Error: {response.status_code}")
+        return None
+    
+    
+#--------------------------------------------------------
 def display_weather(data):
+    # weather_data was sent to this function in main with "display_weather(weather_data)" so now weather_data = data
     """Display weather data in a nice format"""
     if not data:
         return
@@ -50,9 +95,10 @@ def display_weather(data):
 
     # convert unix timezone neutral timestamp to cooresponding datetime object
     # note datetime.fromtimestamp converts timestamp to computers local timezone. use utcfromtimestamp
+    # note utcfromtimestamp (not timezone aware) returns no tz info attached. python prefers datetime.fromtimestamp()
     
-    sunrise_datetime_object = datetime.utcfromtimestamp(sunrise_unix_timestamp)
-    sunset_datetime_object = datetime.utcfromtimestamp(sunset_unix_timestamp)
+    sunrise_datetime_object = datetime.fromtimestamp(sunrise_unix_timestamp, tz=timezone.utc)
+    sunset_datetime_object = datetime.fromtimestamp(sunset_unix_timestamp, tz=timezone.utc)
 
     # timezone (tz) offset must be done to datetime object before string conversion
     # convert tz to timedelta.
@@ -79,7 +125,38 @@ def display_weather(data):
     print(f"Sunrise Time: {sunrise_time}")
     print(f"Sunset Time: {sunset_time}")
 
+#--------------------------------------------------------
+def display_forecast(data):
+    """Display weather data in a nice format"""
+    if not data:
+        return
 
+    # Extract the data we want
+    #city and country listed only once.
+    city = data['city']['name']
+    country = data['city']['country']
+
+    # loop through each entry
+    print(f"\n{'='*50}")
+    print(f"Forecast for {city}, {country}")
+    print(f"{'='*50}")    
+
+    for entry in data['list']:
+        #print(entry.keys())
+        date_stmp = entry['dt']        
+        datetime_object = datetime.fromtimestamp(date_stmp, tz=timezone.utc)        
+        date_string = datetime_object.strftime("%Y-%m-%d %H:%M")      
+        temp = entry['main']['temp']        
+        humidity = entry['main']['humidity']        
+        wind_speed = entry['wind']['speed']
+
+        print(f"\nDate: {date_string}")
+        print(f"Temperature: {temp} C")
+        print(f"Humidity: {humidity}%")
+        print(f"Wind Speed: {wind_speed}m/s")      
+    
+    
+#--------------------------------------------------------
 def main():
     """Main program loop"""
     print("Weather Lookup App")
@@ -90,9 +167,18 @@ def main():
         if city.lower() == 'quit':
             print("Thanks for using Weather App!")
             break
-
-        weather_data = get_weather(city)
-        display_weather(weather_data)
+    while True:
+        option = input("\nEnter Weather or Forecast lookup: ").lower()
+        if option == "weather":
+            weather_data = get_weather(city)
+            display_weather(weather_data) # this sends weather_data into the function display_weather
+        elif option == "forecast":
+            forecast_data = get_forecast(city)
+            display_forecast(forecast_data)
+        else:
+            print("Invalid option. Please select from the two options.")
+            continue
+        
 
 if __name__ == "__main__":
     main()
