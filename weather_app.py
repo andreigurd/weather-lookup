@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone, date
 import json
 from tabulate import tabulate
 import random
+import time
+from requests.exceptions import RequestException, Timeout, ConnectionError, HTTPError
 
 # set global default units
 units = 'metric'
@@ -47,8 +49,10 @@ def verse_of_the_day():
         print(f'"{random_verse['text'].strip()}"\n')
 
 #--------------------------------------------------------------------------------------
-def get_weather(city):
-    """Fetch weather data for a given city"""
+def get_weather_safe(city):
+
+    """Get weather with comprehensive error handling"""
+    
     api_key = os.getenv('OPENWEATHER_API_KEY')
 
     if not api_key:
@@ -61,20 +65,43 @@ def get_weather(city):
         'q': city,
         'appid': api_key,
         'units': units  
-    }
+    }    
+    
+    try:
+        # Make the request
+        response = requests.get(base_url, params=params, timeout=5)
+        # Check if successful
+        if response.status_code == 200:
+            try:
+                return response.json()
+            except ValueError:
+                print("Invalid JSON in response")
+                return None        
 
-    # Make the request
-    response = requests.get(base_url, params=params)
+        # invalid json response.
+        elif response.status_code == 401:
+            print(f"Error with API key. Key not set or invalid.")
+            return None 
+        elif response.status_code == 404:
+            print(f"City '{city}' not found.")
+            return None
+        elif response.status_code == 429:
+            print(f"Rate limit exceeded. Please wait and try again.")
+            return None
+        elif response.status_code == 500:
+            print(f"Server  has encountered an unexpected error. Please try again later.")
+            return None
+        else:
+            print(f"Error: {response.status_code}")
+            return None
+    except ConnectionError:
+        return None, "Cannot connect to weather service. Check your internet connection."
+    except Timeout:
+        return None, "Weather service is taking too long to respond. Try again later."
+    except RequestException as e:
+                return None, f"Request failed: {e}"
 
-    # Check if successful
-    if response.status_code == 200:
-        return response.json()
-    elif response.status_code == 404:
-        print(f"City '{city}' not found")
-        return None
-    else:
-        print(f"Error: {response.status_code}")
-        return None
+
 
 #-----------------------------------------------------------------------    
 def get_forecast(city):
@@ -282,7 +309,7 @@ def main():
     while True:
         option = input("\nEnter Weather or Forecast lookup: ").lower()
         if option == "weather":
-            weather_data = get_weather(city)
+            weather_data = get_weather_safe(city)
             display_weather(weather_data) # this sends weather_data into the function display_weather
             break
         elif option == "forecast":
