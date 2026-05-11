@@ -320,9 +320,6 @@ def main():
             print("Invalid option. Please select from the two options.")
             continue
 
-    return (units, temp_units, speed_units)
-
-
 if __name__ == "__main__":
     main()
 
